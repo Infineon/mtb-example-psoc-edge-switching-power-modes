@@ -12,7 +12,7 @@ This code example has a three project structure: CM33 secure, CM33 non-secure, a
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-psoc-edge-switching-power-modes)
 
-[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzg3MTgiLCJTcGVjIE51bWJlciI6IjAwMi0zODcxOCIsIkRvYyBUaXRsZSI6IlBTT0MmdHJhZGU7IEVkZ2UgTUNVOiBTd2l0Y2hpbmcgcG93ZXIgbW9kZXMiLCJyaWQiOiJwZWV5dXNoIGt1bWFyIiwiRG9jIHZlcnNpb24iOiIyLjAuMCIsIkRvYyBMYW5ndWFnZSI6IkVuZ2xpc2giLCJEb2MgRGl2aXNpb24iOiJNQ0QiLCJEb2MgQlUiOiJJQ1ciLCJEb2MgRmFtaWx5IjoiUFNPQyJ9)
+[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyMzg3MTgiLCJTcGVjIE51bWJlciI6IjAwMi0zODcxOCIsIkRvYyBUaXRsZSI6IlBTT0MmdHJhZGU7IEVkZ2UgTUNVOiBTd2l0Y2hpbmcgcG93ZXIgbW9kZXMiLCJyaWQiOiJwZWV5dXNoIGt1bWFyIiwiRG9jIHZlcnNpb24iOiIyLjEuMCIsIkRvYyBMYW5ndWFnZSI6IkVuZ2xpc2giLCJEb2MgRGl2aXNpb24iOiJNQ0QiLCJEb2MgQlUiOiJJQ1ciLCJEb2MgRmFtaWx5IjoiUFNPQyJ9)
 
 See the [Design and implementation](docs/design_and_implementation.md) for the functional description of this code example.
 
@@ -101,7 +101,9 @@ Document title: *CE238718* – *PSOC&trade; Edge MCU: Switching power modes*
  Version | Description of change
  ------- | ---------------------
  1.x.0   | New code example <br> Early access release
- 2.0.0   | GitHub release 
+ 2.0.0   | GitHub release
+ 2.1.0   | Updated design.modus files and reduced clock frequency prior to modifying the power mode.
+
 <br>
 
 

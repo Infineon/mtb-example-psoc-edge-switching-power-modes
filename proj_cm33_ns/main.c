@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
 * File Name        : main.c
 *
 * Description      : This source file contains the main routine for non-secure
@@ -7,69 +7,68 @@
 * Related Document : See README.md
 *
 ********************************************************************************
-* Copyright 2023-2025, Cypress Semiconductor Corporation (an Infineon company) or
-* an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
-*
-* This software, including source code, documentation and related
-* materials ("Software") is owned by Cypress Semiconductor Corporation
-* or one of its affiliates ("Cypress") and is protected by and subject to
-* worldwide patent protection (United States and foreign),
-* United States copyright laws and international treaty provisions.
-* Therefore, you may use this Software only as provided in the license
-* agreement accompanying the software package from which you
-* obtained this Software ("EULA").
-* If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
-* non-transferable license to copy, modify, and compile the Software
-* source code solely for use in connection with Cypress's
-* integrated circuit products.  Any reproduction, modification, translation,
-* compilation, or representation of this Software except as specified
-* above is prohibited without the express written permission of Cypress.
-*
-* Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND,
-* EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress
-* reserves the right to make changes to the Software without notice. Cypress
-* does not assume any liability arising out of the application or use of the
-* Software or any product or circuit described in the Software. Cypress does
-* not authorize its products for use in any products where a malfunction or
-* failure of the Cypress product may reasonably be expected to result in
-* significant property damage, injury or death ("High Risk Product"). By
-* including Cypress's product in a High Risk Product, the manufacturer
-* of such system or application assumes all risk of such use and in doing
-* so agrees to indemnify Cypress against all liability.
-*******************************************************************************/
+* (c) 2023-2025, Infineon Technologies AG, or an affiliate of Infineon
+* Technologies AG. All rights reserved.
+* This software, associated documentation and materials ("Software") is
+* owned by Infineon Technologies AG or one of its affiliates ("Infineon")
+* and is protected by and subject to worldwide patent protection, worldwide
+* copyright laws, and international treaty provisions. Therefore, you may use
+* this Software only as provided in the license agreement accompanying the
+* software package from which you obtained this Software. If no license
+* agreement applies, then any use, reproduction, modification, translation, or
+* compilation of this Software is prohibited without the express written
+* permission of Infineon.
+* 
+* Disclaimer: UNLESS OTHERWISE EXPRESSLY AGREED WITH INFINEON, THIS SOFTWARE
+* IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* INCLUDING, BUT NOT LIMITED TO, ALL WARRANTIES OF NON-INFRINGEMENT OF
+* THIRD-PARTY RIGHTS AND IMPLIED WARRANTIES SUCH AS WARRANTIES OF FITNESS FOR A
+* SPECIFIC USE/PURPOSE OR MERCHANTABILITY.
+* Infineon reserves the right to make changes to the Software without notice.
+* You are responsible for properly designing, programming, and testing the
+* functionality and safety of your intended application of the Software, as
+* well as complying with any legal requirements related to its use. Infineon
+* does not guarantee that the Software will be free from intrusion, data theft
+* or loss, or other breaches ("Security Breaches"), and Infineon shall have
+* no liability arising out of any Security Breaches. Unless otherwise
+* explicitly approved by Infineon, the Software may not be used in any
+* application where a failure of the Product or any consequences of the use
+* thereof can reasonably be expected to result in personal injury.
+******************************************************************************/
 
-/*******************************************************************************
+/******************************************************************************
 * Header Files
-*******************************************************************************/
+******************************************************************************/
 
 #include "cybsp.h"
 #include "retarget_io_init.h"
 
-/*******************************************************************************
+/******************************************************************************
 * Macros
-*******************************************************************************/
+******************************************************************************/
 #define CM55_BOOT_WAIT_TIME_USEC      (10U)
 #define GPIO_INTERRUPT_PRIORITY       (7U)
 #define PORT_INTR_MASK                (0x00000001UL << 8U)
 #define MASKED_TRUE                   (1U)
 #define USER_BTN_PRESS_DELAY_MS       (50U)
 #define DPLL_ENABLE_TIMEOUT_MS        (10000U)
-#define DPLL_INTPUT_FREQ_HZ           (50000000U)
-#define DPLL_FREQ_HP_HZ               (400000000U)
-#define DPLL_FREQ_LP_HZ               (140000000U)
+#define DPLL_INPUT_FREQ_HZ            (50000000U)  /* 50 MHz */
+#define DPLL_HP_FINAL_FREQ_HZ         (400000000U) /* 400 MHz */
+#define DPLL_LP_INITIAL_FREQ_HZ       (75000000U)  /* 75 MHz */
+#define DPLL_LP_FINAL_FREQ_HZ         (140000000U) /* 140 MHz */
+#define DPLL_ULP_INITIAL_FREQ_HZ      (41000000U)  /* 41 MHz */
+#define DPLL_ULP_FINAL_FREQ_HZ        (50000000U)  /* 50 MHz */
 #define UART_HP_DIV                   (86U)
 #define UART_LP_DIV                   (30U)
 #define UART_ULP_DIV                  (10U)
-#define WAIT_FOR_TX_COMPLETE()        while (!(Cy_SCB_UART_IsTxComplete \
-                                                       (CYBSP_DEBUG_UART_HW)))
+
 /* App boot address for CM55 project */
 #define CM55_APP_BOOT_ADDR          (CYMEM_CM33_0_m55_nvm_START + \
                                         CYBSP_MCUBOOT_HEADER_SIZE)
 
-/******************************************************************************
+/*****************************************************************************
  * Typedefs
- ******************************************************************************/
+ *****************************************************************************/
 typedef enum
 {
     HIGH_PERFORMANCE = 0U,
@@ -79,9 +78,9 @@ typedef enum
     SYSTEM_HIBERNATE
 } en_power_mode_t;
 
-/******************************************************************************
+/*****************************************************************************
  * Global Variables
- ******************************************************************************/
+ *****************************************************************************/
 
 /* Interrupt configuration structure */
 cy_stc_sysint_t intrCfg =
@@ -94,7 +93,7 @@ volatile bool user_btn_flag = false;
 
 en_power_mode_t next_power_state = HIGH_PERFORMANCE;
 
-/*******************************************************************************
+/******************************************************************************
 * Function Name: gpio_interrupt_handler
 ********************************************************************************
 * Summary:
@@ -106,7 +105,7 @@ en_power_mode_t next_power_state = HIGH_PERFORMANCE;
 * Return:
 * void
 *
-*******************************************************************************/
+******************************************************************************/
 static void gpio_interrupt_handler(void)
 {
     if (Cy_GPIO_GetInterruptStatus(CYBSP_USER_BTN_PORT, CYBSP_USER_BTN_PIN))
@@ -120,7 +119,7 @@ static void gpio_interrupt_handler(void)
     }
 }
 
-/******************************************************************************
+/*****************************************************************************
  * Function Name: dpll_lp_set_freq
  ******************************************************************************
  * Summary:
@@ -132,42 +131,42 @@ static void gpio_interrupt_handler(void)
  * Return:
  *  void
  *
- ******************************************************************************/
+ *****************************************************************************/
 static void dpll_lp_set_freq(uint32_t freq)
 {
-    /** Define a PLL configuration structure **/
-    cy_stc_pll_config_t dpll_hp;
+    /* Define a PLL configuration structure */
+    cy_stc_pll_config_t dpll_lp;
 
-    /** Set the input frequency of the PLL **/
-    dpll_hp.inputFreq = DPLL_INTPUT_FREQ_HZ;
+    /* Set the input frequency of the PLL */
+    dpll_lp.inputFreq = DPLL_INPUT_FREQ_HZ;
 
-    /** Set the output mode of the PLL to auto **/
-    dpll_hp.outputMode = CY_SYSCLK_FLLPLL_OUTPUT_AUTO;
+    /* Set the output mode of the PLL to auto */
+    dpll_lp.outputMode = CY_SYSCLK_FLLPLL_OUTPUT_AUTO;
 
-    /** Set the desired output frequency of the PLL **/
-    dpll_hp.outputFreq = freq;
+    /* Set the desired output frequency of the PLL */
+    dpll_lp.outputFreq = freq;
 
-    /** Disable the DPLL_HP_0 PLL path **/
+    /* Disable the DPLL */
     Cy_SysClk_PllDisable(SRSS_DPLL_LP_0_PATH_NUM);
 
-    /** Configure the PLL with the specified settings **/
+    /* Configure the DPLL with the specified settings */
     if (CY_SYSCLK_SUCCESS !=
-            Cy_SysClk_PllConfigure(SRSS_DPLL_LP_0_PATH_NUM, &dpll_hp))
+            Cy_SysClk_PllConfigure(SRSS_DPLL_LP_0_PATH_NUM, &dpll_lp))
     {
-        /** Handle error if PLL configuration fails **/
+        /* Handle error if PLL configuration fails */
          handle_app_error();
     }
 
-    /** Enable the DPLL_HP_0 PLL path with a timeout **/
+    /* Enable the DPLL path with a timeout */
     if (CY_SYSCLK_SUCCESS !=
             Cy_SysClk_PllEnable(SRSS_DPLL_LP_0_PATH_NUM, DPLL_ENABLE_TIMEOUT_MS))
     {
-        /** Handle error if PLL enable fails **/
+        /* Handle error if DPLL enable fails */
          handle_app_error();
     }
 }
 
-/******************************************************************************
+/*****************************************************************************
  * Function Name: main
  ******************************************************************************
  * Summary:
@@ -179,7 +178,7 @@ static void dpll_lp_set_freq(uint32_t freq)
  * Return:
  *  int
  *
- ******************************************************************************/
+ *****************************************************************************/
 int main(void)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
@@ -234,10 +233,11 @@ int main(void)
     /* Set idle power mode configuration of SOCMEM to deepsleep */
     Cy_SysPm_SetSOCMEMDeepSleepMode(CY_SYSPM_MODE_DEEPSLEEP);
 
-    /*CY_CM55_APP_BOOT_ADDR must be updated if CM55 memory layout is changed.*/
+    /* CY_CM55_APP_BOOT_ADDR must be updated if CM55 memory layout is changed. */
     Cy_SysEnableCM55(MXCM55, CM55_APP_BOOT_ADDR, CM55_BOOT_WAIT_TIME_USEC);
 
     printf("Press BTN1 to switch power mode\r\n");
+
     for (;;)
     {
         if(user_btn_flag)
@@ -253,7 +253,6 @@ int main(void)
             {
                 case HIGH_PERFORMANCE:
                 {
-                    /** Enter Low Power (LP) mode.*/
                     status = Cy_SysPm_SystemEnterHp();
 
                     if (CY_SYSPM_SUCCESS != status)
@@ -261,87 +260,104 @@ int main(void)
                         handle_app_error();
                     }
 
-                    /** Check if the system successfully entered ULP mode. */
+                    /* Check if the system successfully entered ULP mode. */
                     if (Cy_SysPm_ReadStatus() & CY_SYSPM_STATUS_SYSTEM_HP)
                     {
-                        /** Set the RRAM to HP voltage mode*/
+                        /* Set the RRAM to HP voltage mode*/
                         Cy_RRAM_SetVoltageMode(RRAMC0, CY_RRAM_VMODE_HP);
                         
                         Cy_SysClk_ClkHfSetDivider(CY_CFG_SYSCLK_CLKHF0, CY_SYSCLK_CLKHF_DIVIDE_BY_2);
 
-                        dpll_lp_set_freq(DPLL_FREQ_HP_HZ);
+                        dpll_lp_set_freq(DPLL_HP_FINAL_FREQ_HZ);
 
-                        /** Set the peripheral clock divider for the debug UART */
+                        /* Set the peripheral clock divider for the debug UART */
                         Cy_SysClk_PeriPclkSetDivider((en_clk_dst_t)CYBSP_DEBUG_UART_CLK_DIV_GRP_NUM,
                                 CY_SYSCLK_DIV_16_BIT, 1U, UART_HP_DIV);
                     }
 
                     printf("Power Mode: System High Performance.\r\n");
-                    WAIT_FOR_TX_COMPLETE();
+                    while (!Cy_SCB_UART_IsTxComplete(CYBSP_DEBUG_UART_HW));
+
                     next_power_state = LOW_POWER;
                     break;
                 }
 
                 case LOW_POWER:
                 {
-                    dpll_lp_set_freq(DPLL_FREQ_LP_HZ);
-                    /** Enter Low Power (LP) mode.*/
+                    /* Set the DPLL frequency to the initial frequency */
+                    dpll_lp_set_freq(DPLL_LP_INITIAL_FREQ_HZ);
+
+                    /* Attempt to enter the Low Power mode (LP) */
                     status = Cy_SysPm_SystemEnterLp();
+
+                    /* Check if entering LP mode was successful */
                     if (CY_SYSPM_SUCCESS != status)
                     {
                         handle_app_error();
                     }
 
-                    /** Check if the system successfully entered ULP mode. */
+                    /* Set the DPLL frequency to the final frequency after
+                     * LP mode is entered.
+                     */
+                    dpll_lp_set_freq(DPLL_LP_FINAL_FREQ_HZ);
+
+                    /* Check if the system successfully entered ULP mode. */
                     if (Cy_SysPm_ReadStatus() & CY_SYSPM_STATUS_SYSTEM_LP)
                     {
-                        /** Set the RRAM to LP voltage mode for lower power 
+                        /* Set the RRAM to LP voltage mode for lower power 
                          * consumption. */
                         Cy_RRAM_SetVoltageMode(RRAMC0, CY_RRAM_VMODE_LP);
                         
                         Cy_SysClk_ClkHfSetDivider(CY_CFG_SYSCLK_CLKHF0, CY_SYSCLK_CLKHF_DIVIDE_BY_2);
 
-                        /** Set the peripheral clock divider for the debug UART */
+                        /* Set the peripheral clock divider for the debug UART */
                         Cy_SysClk_PeriPclkSetDivider((en_clk_dst_t)CYBSP_DEBUG_UART_CLK_DIV_GRP_NUM,
                                 CY_SYSCLK_DIV_16_BIT, 1U, UART_LP_DIV);
                     }
 
                     printf("Power Mode: System Low Power.\r\n");
-                    WAIT_FOR_TX_COMPLETE();
+                    while (!Cy_SCB_UART_IsTxComplete(CYBSP_DEBUG_UART_HW));
+
                     next_power_state = ULTRA_LOW_POWER;
                     break;
                 }
 
                 case ULTRA_LOW_POWER:
                 {
-                    /** Disable the high-performance DPLL and Directly clock 
-                     * from IHO (50 MHz)*/
-                    
-                    Cy_SysClk_PllDisable(SRSS_DPLL_LP_0_PATH_NUM);
+                    /* Set the DPLL frequency to the initial frequency */
+                    dpll_lp_set_freq(DPLL_ULP_INITIAL_FREQ_HZ);
 
-                    /** Enter Ultra-Low Power (ULP) mode.*/
+                    /* Attempt to enter the ultra-low-power mode (ULP) */
                     status = Cy_SysPm_SystemEnterUlp();
+                    
+                    /* Check if entering ULP mode was successful */
                     if (CY_SYSPM_SUCCESS != status)
                     {
                         handle_app_error();
                     }
-
-                    /** Check if the system successfully entered ULP mode. */
+                    
+                    /* Set the DPLL frequency to the final frequency after ULP
+                     * mode is entered.
+                     */
+                    dpll_lp_set_freq(DPLL_ULP_FINAL_FREQ_HZ);
+                    
+                    /* Check if the system successfully entered ULP mode. */
                     if (Cy_SysPm_ReadStatus() & CY_SYSPM_STATUS_SYSTEM_ULP)
                     {
-                        /** Set the RRAM to ULP voltage mode for lower power 
-                         * consumption. */
+                        /* Set the RRAM to ULP voltage mode for lower power 
+                         * consumption.
+                         */
                         Cy_RRAM_SetVoltageMode(RRAMC0, CY_RRAM_VMODE_ULP);
 
-                        /** Set the high-frequency clock (CLKHF) to no divide */
+                        /* Set the high-frequency clock (CLKHF) to no divide */
                         Cy_SysClk_ClkHfSetDivider(CY_CFG_SYSCLK_CLKHF0, CY_SYSCLK_CLKHF_NO_DIVIDE);
 
-                        /** Set the peripheral clock divider for the debug UART */
+                        /* Set the peripheral clock divider for the debug UART */
                         Cy_SysClk_PeriPclkSetDivider((en_clk_dst_t)CYBSP_DEBUG_UART_CLK_DIV_GRP_NUM,
                                 CY_SYSCLK_DIV_16_BIT, 1U, UART_ULP_DIV);
                     }
                     printf("Power Mode: System Ultra Low Power.\r\n");
-                    WAIT_FOR_TX_COMPLETE();
+                    while (!Cy_SCB_UART_IsTxComplete(CYBSP_DEBUG_UART_HW));
 
                     next_power_state = SYSTEM_DEEP_SLEEP;
                     break;
@@ -350,10 +366,11 @@ int main(void)
                 case SYSTEM_DEEP_SLEEP:
                 {
                     printf("Power Mode: System Deep Sleep.\r\n");
-                    WAIT_FOR_TX_COMPLETE();
+                    while (!Cy_SCB_UART_IsTxComplete(CYBSP_DEBUG_UART_HW));
 
-                    /*Enter deep sleep mode,and wait for interrupt to wake
-                     * up the CPU*/
+                    /* Enter deep sleep mode,and wait for interrupt to wake up 
+                     * the CPU.
+                     */
                     Cy_SysPm_CpuEnterDeepSleep(CY_SYSPM_WAIT_FOR_INTERRUPT);
 
                     next_power_state = SYSTEM_HIBERNATE;
@@ -363,14 +380,28 @@ int main(void)
                 case SYSTEM_HIBERNATE:
                 {
                     printf("Power Mode: System Hibernate.\r\n");
-                    WAIT_FOR_TX_COMPLETE();
+                    
+                    /* Ensure all UART transmission is complete before
+                     * proceeding.
+                     */
+                    while (!Cy_SCB_UART_IsTxComplete(CYBSP_DEBUG_UART_HW));
 
-                    /*Set the wake-up source for hibernate mode to pin 1 low*/
+                    /* Deinitialize UART for successful wake-up recovery; 
+                     * leaving it initialized may cause issues.
+                     */
+                    Cy_SCB_UART_DeInit(CYBSP_DEBUG_UART_HW);
+
+                    /* Configure the wakeup source for Hibernate mode.
+                     * In this case, the system will wake up when PIN1 is pulled
+                     * low.
+                     */
                     Cy_SysPm_SetHibernateWakeupSource(CY_SYSPM_HIBERNATE_PIN1_LOW);
 
                     Cy_SysPm_SystemEnterHibernate();
+                    
                     /* Should never reach here, as the system should be in
-                     * hibernate mode now */
+                     * hibernate mode now.
+                     */
                     break;
                 }
 
