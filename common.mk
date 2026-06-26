@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# (c) 2023-2025, Infineon Technologies AG, or an affiliate of Infineon
+# (c) 2023-2026, Infineon Technologies AG, or an affiliate of Infineon
 # Technologies AG.  SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,11 @@ TOOLCHAIN=GCC_ARM
 # If CONFIG is manually edited, ensure to update or regenerate 
 # launch configurations for your IDE.
 CONFIG=Debug
+
+# Disable GFXSS for KIT_PSE84_HMI
+ifeq ($(filter APP_KIT_PSE84_HMI KIT_PSE84_HMI, $(TARGET)), $(TARGET))
+override DISABLE_COMPONENTS+=GFXSS
+endif
 
 # Config file for postbuild sign and merge operations.
 # NOTE: Check the JSON file for the command parameters

@@ -7,7 +7,7 @@
 *
 *
 *******************************************************************************
-* (c) 2023-2025, Infineon Technologies AG, or an affiliate of Infineon
+* (c) 2023-2026, Infineon Technologies AG, or an affiliate of Infineon
 * Technologies AG. All rights reserved.
 * This software, associated documentation and materials ("Software") is
 * owned by Infineon Technologies AG or one of its affiliates ("Infineon")
@@ -18,7 +18,7 @@
 * agreement applies, then any use, reproduction, modification, translation, or
 * compilation of this Software is prohibited without the express written
 * permission of Infineon.
-* 
+*
 * Disclaimer: UNLESS OTHERWISE EXPRESSLY AGREED WITH INFINEON, THIS SOFTWARE
 * IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 * INCLUDING, BUT NOT LIMITED TO, ALL WARRANTIES OF NON-INFRINGEMENT OF
@@ -125,8 +125,13 @@ int main(void)
         CY_MMIO_SMIF0_CLK_HF_NR
     );
 
+#if defined(CYBSP_OSPI_FLASH_SS_ENABLED)
+    /* Initialize SMIF in OSPI mode */
+    status = external_memory_init(OSPI);
+#else
     /* Initialize SMIF in QSPI mode */
     status = external_memory_init(QSPI);
+#endif
     if(CY_SMIF_SUCCESS != status)
     {
         /* Disable all interrupts. */
